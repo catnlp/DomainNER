@@ -18,7 +18,7 @@
 
 **Character-Based LSTM-CRF**
 
-<p align="center"><img width="100%" src="images/Model.PNG" /></p>
+<p align="center"><img width="80%" height="80%" src="images/Model.PNG" /></p>
 
 *图片来源：Character-Based LSTM-CRF with Radical-Level Features for Chinese Named Entity Recognition*
 
