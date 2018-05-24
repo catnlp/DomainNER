@@ -5,6 +5,7 @@
 @Time: 2018/5/24 15:48
 '''
 import os
+import json
 import openpyxl
 
 class Origin2Raw:
@@ -46,8 +47,20 @@ class Origin2Raw:
                 dict.write(sheet.cell(row+1, 2).value + '\t' + sheet.cell(row+1, 3).value + '\n')
                 print(sheet.cell(row+1, 2).value + '\t' + sheet.cell(row+1, 3).value)
 
-    def json2text(self, save_name, json_suffix='jsonl'):
-        pass
+    def json2text(self, save_name='raw.txt', json_suffix='jsonl'):
+        save_path = self.save + save_name
+        with open(save_path, 'w') as raw:
+            for parent, dirnames, filenames in os.walk(self.path):
+                for filename in filenames:
+                    if filename.endswith(json_suffix):
+                        file_path = os.path.join(parent, filename)
+                        print('文件名：%s' % filename)
+                        print('文件完整路径：%s\n' % file_path)
+                        with open(file_path) as origin:
+                            lines = origin.readlines()
+                            for line in lines:
+                                dict = json.loads(line)
+                                raw.write(dict['text'] + '\n\n')
 
 if __name__ == '__main__':
     origin2raw = Origin2Raw('../data/origin/Anti-fraud Product Data', '../data/raw')
