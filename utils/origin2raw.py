@@ -60,7 +60,8 @@ class Origin2Raw:
                             lines = origin.readlines()
                             for line in lines:
                                 dict = json.loads(line)
-                                raw.write(dict['text'] + '\n\n')
+                                if dict['answer'] == 'accept':
+                                    raw.write(dict['text'] + '\n')
 
 if __name__ == '__main__':
     origin2raw = Origin2Raw('../data/origin/Anti-fraud Product Data', '../data/raw')
