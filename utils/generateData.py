@@ -6,6 +6,7 @@
 '''
 import os
 import re
+import json
 
 class GenerateData:
     def __init__(self, path):
@@ -18,7 +19,7 @@ class GenerateData:
             exit(1)
         self.path = path
 
-    def generateData(self, clean_name='clean.txt', dict_name='dict.txt', train_name='train.txt'):
+    def generateTrain(self, clean_name='clean.txt', dict_name='dict.txt', train_name='train.txt'):
         clean_path = self.path + clean_name
         print('Clean path: %s', clean_path)
         if not os.path.exists(clean_path):
@@ -70,6 +71,46 @@ class GenerateData:
                 str += '\n'
             train.write(str[: -1])
 
+    def generateTest(self, origin_path, test_name='test.txt'):
+        test_path = self.path + test_name
+
+        with open(origin_path) as origin, open(test_path, 'w') as test:
+            lines = origin.readlines()
+            str = ''
+            for line in lines:
+                line = json.loads(line)
+                if line['answer'] == 'reject':
+                    continue
+
+                tag = line.get('spans')
+                content = line['text']
+                current = 0
+                if tag:
+                    entityList = line['spans']
+                    for entity in entityList:
+                        for i in range(current, entity['start']):
+                            str += content[i] + '\tO\n'
+                        tag = entity['label']
+                        if entity['start'] + 1 == entity['end']:
+                            str += content[entity['start']] + '\tS-' + tag + '\n'
+                        else:
+                            str += content[entity['start']] + '\tB-' + tag + '\n'
+                            for i in range(entity['start']+1, entity['end']-1):
+                                str += content[i] + '\tM-' + tag + '\n'
+                            str += content[entity['end']-1] + '\tE-' + tag + '\n'
+                        current = entity['end']
+                    for i in range(current, len(content)):
+                        str += content[i] + '\tO\n'
+
+                else:
+                    for i in range(len(content)):
+                        str += content[i] + '\tO\n'
+                str += '\n'
+            test.write(str[: -1])
+
+
+
 if __name__ == '__main__':
     generate = GenerateData('../data/raw')
-    generate.generateData('clean.txt', 'dict.txt', 'train.txt')
+    generate.generateTrain('clean.txt', 'dict.txt', 'train.txt')
+    generate.generateTest('../data/origin/Anti-fraud Product Data/Intel-05-17.jsonl', 'test.txt')
