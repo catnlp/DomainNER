@@ -52,7 +52,7 @@ class Origin2Raw:
         with open(save_path, 'w') as raw:
             for parent, dirnames, filenames in os.walk(self.path):
                 for filename in filenames:
-                    if filename.endswith(json_suffix):
+                    if filename.endswith(json_suffix) and filename.find('17') == -1:
                         file_path = os.path.join(parent, filename)
                         print('文件名：%s' % filename)
                         print('文件完整路径：%s\n' % file_path)

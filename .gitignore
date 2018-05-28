@@ -106,5 +106,5 @@ out/
 
 # project
 data/
-models/
+model/
 .torch/

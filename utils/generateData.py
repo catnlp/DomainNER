@@ -19,7 +19,7 @@ class GenerateData:
             exit(1)
         self.path = path
 
-    def generateTrain(self, clean_name='clean.txt', dict_name='dict.txt', train_name='train.txt'):
+    def generateTrain(self, clean_name='clean.txt', dict_name='dict.txt', train_name='train.bmes'):
         clean_path = self.path + clean_name
         print('Clean path: %s', clean_path)
         if not os.path.exists(clean_path):
@@ -71,7 +71,7 @@ class GenerateData:
                 str += '\n'
             train.write(str[: -1])
 
-    def generateTest(self, origin_path, test_name='test.txt'):
+    def generateTest(self, origin_path, test_name='test.bmes'):
         test_path = self.path + test_name
 
         with open(origin_path) as origin, open(test_path, 'w') as test:
@@ -89,7 +89,11 @@ class GenerateData:
                     entityList = line['spans']
                     for entity in entityList:
                         for i in range(current, entity['start']):
+                            if content[i] == ' ' or content[i] == ' ' or content[i] == '　':
+                                continue
                             str += content[i] + '\tO\n'
+                            if content[i] == '。' or content[i] == '？':
+                                str += '\n'
                         tag = entity['label']
                         if entity['start'] + 1 == entity['end']:
                             str += content[entity['start']] + '\tS-' + tag + '\n'
@@ -100,17 +104,32 @@ class GenerateData:
                             str += content[entity['end']-1] + '\tE-' + tag + '\n'
                         current = entity['end']
                     for i in range(current, len(content)):
+                        if content[i] == ' ' or content[i] == ' ' or content[i] == '　':
+                            continue
                         str += content[i] + '\tO\n'
+                        if content[i] == '。' or content[i] == '？':
+                            str += '\n'
 
                 else:
                     for i in range(len(content)):
+                        if content[i] == ' ' or content[i] == ' ' or content[i] == '　':
+                            continue
                         str += content[i] + '\tO\n'
+                        if content[i] == '。' or content[i] == '？':
+                            str += '\n'
                 str += '\n'
-            test.write(str[: -1])
+            # clean data
+            str = str.replace('。\tO\n\n。\tO\n', '。\tO\n。\tO\n')
+            str = str.replace('？\tO\n\n？\tO\n', '？\tO\n？\tO\n')
+            str = str.replace('？\tO\n\n！\tO\n', '？\tO\n！\tO\n')
+            str = str.replace('\n\n\n', '\n\n')
+            str = str.replace('。\tO\n\n。\tO\n', '。\tO\n。\tO\n')
+            str = str.replace('？\tO\n\n？\tO\n', '？\tO\n？\tO\n')
+            str = str.replace('？\tO\n\n！\tO\n', '？\tO\n！\tO\n')
 
-
+            test.write(str)
 
 if __name__ == '__main__':
     generate = GenerateData('../data/raw')
-    generate.generateTrain('clean.txt', 'dict.txt', 'train.txt')
-    generate.generateTest('../data/origin/Anti-fraud Product Data/Intel-05-17.jsonl', 'test.txt')
+    generate.generateTrain('clean.txt', 'dict.txt', 'train.bmes')
+    generate.generateTest('../data/origin/Anti-fraud Product Data/Intel-05-17.jsonl', 'test.bmes')

@@ -14,9 +14,11 @@
 
 **博客**
 - [x] [(1) 达观数据如何打造一个中文NER系统](https://zhuanlan.zhihu.com/p/27597790)
+- [x] [(2) How can I train my own NER model?](https://nlp.stanford.edu/software/crf-faq.html#a)
 
 **代码**
 - [x] [(1) zjy-ucas/ChineseNER](https://github.com/zjy-ucas/ChineseNER)
+- [x] [(2) jiesutd/NCRFpp](https://github.com/jiesutd/NCRFpp)
 
 ## 2 模型
 
@@ -29,7 +31,23 @@
 ## 3 环境
 
 ```
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
-## 4 待续
+## 4 运行
+
+### 4.1 训练
+
+```
+$ python3 main.py --config train.config
+```
+
+### 4.2 使用
+
+```
+$ python3 main.py --config decode.config
+```
+
+## 5 实验
+
+## 6 待续
