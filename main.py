@@ -34,7 +34,7 @@ if __name__ == '__main__':
         # data.generate_instance('dev')
         data.generate_instance('test')
         data.build_pretrain_emb()
-        name = 'domain-SGD'
+        name = 'domain-cws'
         train(data, name)
     elif status == 'decode':
         print("MODEL: decode")

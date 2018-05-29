@@ -171,7 +171,7 @@ class Data:
         sys.stdout.flush()
 
     def initial_feature_alphabets(self):
-        items = open(self.train_dir, 'r').readline().strip('\n').split()
+        items = open(self.train_dir, 'r').readline().strip('\n').split('\t')
         total_column = len(items)
         if total_column > 2:
             for idx in range(1, total_column - 1):
@@ -197,7 +197,8 @@ class Data:
         in_lines = open(input_file, 'r').readlines()
         for line in in_lines:
             if len(line) > 2:
-                pairs = line.strip().split()
+                line = line.replace('\n', '')  # catnlp
+                pairs = line.split('\t')
                 word = pairs[0]
                 if self.number_normalized:
                     word = normalize_word(word)
@@ -207,6 +208,8 @@ class Data:
                 ## build feature alphabet
                 for idx in range(self.feature_num):
                     feat_idx = pairs[idx + 1].split(']', 1)[-1]
+                    if(feat_idx == 'M-Product_Name'):
+                        print(line)
                     self.feature_alphabets[idx].add(feat_idx)
                 # for char in word:
                 #     self.char_alphabet.add(char)
@@ -227,6 +230,7 @@ class Data:
                 self.tagScheme = "BMES"
             else:
                 self.tagScheme = "BIO"
+        # print(self.feature_alphabets[0].get_content())
 
     def fix_alphabet(self):
         self.word_alphabet.close()
@@ -335,13 +339,13 @@ class Data:
             if nbest > 1:
                 score_string = "# "
                 for idz in range(nbest):
-                    score_string += format(pred_scores[idx][idz], '.4f') + " "
+                    score_string += format(pred_scores[idx][idz], '.4f') + "\t"
                 fout.write(score_string.strip() + "\n")
 
             for idy in range(sent_length):
-                label_string = content_list[idx][0][idy] + " "
+                label_string = content_list[idx][0][idy] + "\t" # catnlp
                 for idz in range(nbest):
-                    label_string += predict_results[idx][idz][idy] + " "
+                    label_string += predict_results[idx][idz][idy] + "\t"
                 label_string = label_string.strip() + "\n"
                 fout.write(label_string)
             fout.write('\n')

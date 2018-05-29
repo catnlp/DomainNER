@@ -7,6 +7,7 @@
 import os
 import re
 import json
+import jieba
 
 class GenerateData:
     def __init__(self, path):
@@ -47,29 +48,54 @@ class GenerateData:
                 line = line.replace('\n', '')
                 if line == '':
                     continue
+                seg_list = jieba.lcut(line, cut_all=False)
+                pos = 0
                 s = re.compile(rule)
                 tmp = 0
                 answers = s.finditer(line)
                 if answers:
                     for i in answers:
                         for j in range(tmp, i.start()):
-                            str += line[j] + '\tO\n'
+                            cws, pos = self.Traincws(seg_list, line[j], pos)
+                            str += line[j] + '\t[cws]' + cws + '\tO\n'
                         tag = dict_tag[i.group()]
                         if i.start() + 1 == i.end():
-                            str += line[i.start()] + '\tS-' + tag + '\n'
+                            cws, pos = self.Traincws(seg_list, line[i.start()], pos)
+                            str += line[i.start()] + '\t[cws]' + cws + '\tS-' + tag + '\n'
                         else:
-                            str += line[i.start()] + '\tB-' + tag + '\n'
+                            cws, pos = self.Traincws(seg_list, line[i.start()], pos)
+                            str += line[i.start()] + '\t[cws]' + cws + '\tB-' + tag + '\n'
                             for j in range(i.start()+1, i.end()-1):
-                                str += line[j] + '\tM-' + tag + '\n'
-                            str += line[i.end()-1] + '\tE-' + tag + '\n'
+                                cws, pos = self.Traincws(seg_list, line[j], pos)
+                                str += line[j] + '\t[cws]' + cws + '\tM-' + tag + '\n'
+                            cws, pos = self.Traincws(seg_list, line[i.end()-1], pos)
+                            str += line[i.end()-1] + '\t[cws]' + cws + '\tE-' + tag + '\n'
                         tmp = i.end()
                     for j in range(tmp, len(line)):
-                        str += line[j] + '\tO\n'
+                        cws, pos = self.Traincws(seg_list, line[j], pos)
+                        str += line[j] + '\t[cws]' + cws +  '\tO\n'
                 else:
                     for i in range(len(line)):
-                        str += line[i] + '\tO\n'
+                        cws, pos = self.Traincws(seg_list, line[i], pos)
+                        str += line[i] + '\t[cws]' + cws + '\tO\n'
                 str += '\n'
             train.write(str[: -1])
+
+    def Traincws(self, tokens, char, pos):
+        while (tokens[pos].find(char) == -1):
+            pos += 1
+        if(len(tokens[pos]) == 1):
+            cws = 'S'
+            return cws, pos+1
+        tmp = tokens[pos].find(char)
+        if tmp == 0:
+            cws = 'B'
+        elif tmp == len(tokens[pos]) - 1:
+            cws = 'E'
+            pos += 1
+        else:
+            cws = 'M'
+        return cws, pos
 
     def generateTest(self, origin_path, test_name='test.bmes'):
         test_path = self.path + test_name
@@ -84,6 +110,9 @@ class GenerateData:
 
                 tag = line.get('spans')
                 content = line['text']
+                tokens = line['tokens']
+                pos = 0
+                tmp = 0
                 current = 0
                 if tag:
                     entityList = line['spans']
@@ -91,22 +120,28 @@ class GenerateData:
                         for i in range(current, entity['start']):
                             if content[i] == ' ' or content[i] == ' ' or content[i] == '　':
                                 continue
-                            str += content[i] + '\tO\n'
+                            cws, pos = self.Testcws(tokens, content[i], pos)
+                            str += content[i] + '\t[cws]' + cws + '\tO\n'
                             if content[i] == '。' or content[i] == '？':
                                 str += '\n'
                         tag = entity['label']
                         if entity['start'] + 1 == entity['end']:
-                            str += content[entity['start']] + '\tS-' + tag + '\n'
+                            cws, pos = self.Testcws(tokens, content[entity['start']], pos)
+                            str += content[entity['start']] + '\t[cws]' + cws +'\tS-' + tag + '\n'
                         else:
-                            str += content[entity['start']] + '\tB-' + tag + '\n'
+                            cws, pos = self.Testcws(tokens, content[entity['start']], pos)
+                            str += content[entity['start']] + '\t[cws]' + cws + '\tB-' + tag + '\n'
                             for i in range(entity['start']+1, entity['end']-1):
-                                str += content[i] + '\tM-' + tag + '\n'
-                            str += content[entity['end']-1] + '\tE-' + tag + '\n'
+                                cws, pos = self.Testcws(tokens, content[i], pos)
+                                str += content[i] + '\t[cws]' + cws + '\tM-' + tag + '\n'
+                            cws, pos = self.Testcws(tokens, content[entity['end']-1], pos)
+                            str += content[entity['end']-1] + '\t[cws]' + cws + '\tE-' + tag + '\n'
                         current = entity['end']
                     for i in range(current, len(content)):
                         if content[i] == ' ' or content[i] == ' ' or content[i] == '　':
                             continue
-                        str += content[i] + '\tO\n'
+                        cws, pos = self.Testcws(tokens, content[i], pos)
+                        str += content[i] + '\t[cws]' +cws + '\tO\n'
                         if content[i] == '。' or content[i] == '？':
                             str += '\n'
 
@@ -114,20 +149,37 @@ class GenerateData:
                     for i in range(len(content)):
                         if content[i] == ' ' or content[i] == ' ' or content[i] == '　':
                             continue
-                        str += content[i] + '\tO\n'
+                        cws, pos = self.Testcws(tokens, content[i], pos)
+                        str += content[i] + '\t[cws]' + cws + '\tO\n'
                         if content[i] == '。' or content[i] == '？':
                             str += '\n'
                 str += '\n'
             # clean data
-            str = str.replace('。\tO\n\n。\tO\n', '。\tO\n。\tO\n')
-            str = str.replace('？\tO\n\n？\tO\n', '？\tO\n？\tO\n')
-            str = str.replace('？\tO\n\n！\tO\n', '？\tO\n！\tO\n')
+            str = str.replace('。\tS\tO\n\n。\tS\tO\n', '。\tS\tO\n。\tS\tO\n')
+            str = str.replace('？\tS\tO\n\n？\tO\n', '？\tS\tO\n？\tS\tO\n')
+            str = str.replace('？\tS\tO\n\n！\tS\tO\n', '？\tS\tO\n！\tS\tO\n')
             str = str.replace('\n\n\n', '\n\n')
-            str = str.replace('。\tO\n\n。\tO\n', '。\tO\n。\tO\n')
-            str = str.replace('？\tO\n\n？\tO\n', '？\tO\n？\tO\n')
-            str = str.replace('？\tO\n\n！\tO\n', '？\tO\n！\tO\n')
+            str = str.replace('。\tS\tO\n\n。\tS\tO\n', '。\tS\tO\n。\tS\tO\n')
+            str = str.replace('？\tS\tO\n\n？\tO\n', '？\tS\tO\n？\tS\tO\n')
+            str = str.replace('？\tS\tO\n\n！\tS\tO\n', '？\tS\tO\n！\tS\tO\n')
 
             test.write(str)
+
+    def Testcws(self, tokens, char, pos):
+        while (tokens[pos]['text'].find(char) == -1):
+            pos += 1
+        if(tokens[pos]['end'] - tokens[pos]['start'] == 1):
+            cws = 'S'
+            return cws, pos+1
+        tmp = tokens[pos]['text'].find(char)
+        if tmp == 0:
+            cws = 'B'
+        elif tmp == tokens[pos]['end'] - tokens[pos]['start'] - 1:
+            cws = 'E'
+            pos += 1
+        else:
+            cws = 'M'
+        return cws, pos
 
 if __name__ == '__main__':
     generate = GenerateData('../data/raw')

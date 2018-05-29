@@ -50,4 +50,9 @@ $ python3 main.py --config decode.config
 
 ## 5 实验
 
+*暂时不贴出来*
+
 ## 6 待续
+
+- [x] 添加分词特征
+- [ ] 看新论文
